@@ -1,5 +1,8 @@
 #!/bin/bash
-#/home/thomas/Applications/ParentalControl/display_time_left_once.sh
+#/.../ParentalControl/display_time_left_once.sh
+# Basic script to be called by user to display his time left
+# TODO Just the general idea here. Still to be streamlined
+# TODO Install script should copy it to some place like /usr/bin/
 VICTIM=loic
 #TIME_LEFT_FILE=/root/$VICTIM-time-left.cfg
 TIME_LEFT_FILE_FOR_USER=/tmp/$VICTIM-time-left.cfg
