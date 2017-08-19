@@ -7,7 +7,7 @@
 # Started       : May 12, 2011
 # Last Modified : March, 2015
 # Author        : Anthony David (Pilosopong Tasyo)
-# Author (minor): Trapovid (anonymous but reachable at http://forums.linuxmint.com )
+# Author (minor): Thomas Baeckeroot
 # Module        : limit-usage-time.sh
 # Description   : Monitors the amount of time a user spends on the computer.
 #                 Lock the screen when the limit has been reached.  Run this
