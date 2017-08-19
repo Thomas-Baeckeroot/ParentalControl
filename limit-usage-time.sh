@@ -9,32 +9,33 @@
 # Author        : Anthony David (Pilosopong Tasyo)
 # Author (minor): Thomas Baeckeroot
 # Module        : limit-usage-time.sh
-# Description   : Monitors the amount of time a user spends on the computer.
-#                 Lock the screen when the limit has been reached.  Run this
-#                 script as a cron job (executed once per minute).
+# Description   : Monitors the amount of time a user spends on the computer then
+#                 locks the screen when the limit has been reached.
+#                 This script is run as a cron job (executed once per minute).
 #
-# Installation explained at http://forums.linuxmint.com/viewtopic.php?f=213&t=77687
+# To install it, run ./install.sh
+# Further explancations at http://forums.linuxmint.com/viewtopic.php?f=213&t=77687
 #
-# Note from Trapovid:
-# Previous script version was not working fully on my PC, so I modified it.
+# Previous script version (copied from Anthony David) was not working fully on my PC, so I modified it.
 # I aimed to be as generic as possible but I am not sure what is specific to my configuration and what is not.
-# This script worked fine with Linux Mint 17.1 Xfce (with a configuration that uses more than one X terminal).
+# This script worked fine with:
+# - Linux Mint 17.1 Xfce, 18.1 Xfce (with a configuration that uses more than one X terminal).
 #
 # Comment by ganamant » […] "CD/USB booting should be disabled on the BIOS, too"
 #
 ##########
 
-# For debuging:
+# To debug a cron job (as this script), we can also inform the cron line with the "2>&1" tag, as per below example:
+# * * * * * /root/limit-usage-time.sh >> /tmp/limit-usage-time.log 2>&1
 echo -----------------------------------------------------------
 echo `date`
 echo Running $0 with user $USER
 set -x
-# To debug a cron job (as this script), we can also inform the cron line with the "2>&1" tag, as per below example:
-# * * * * * /root/limit-usage-time.sh >> /tmp/limit-usage-time.log 2>&1
 
 
 # Some useful variables
 ADMIN=thomas  # ADMIN = login name of the computer's administrator.
+# TODO: move to variable
 
 # Date- and time-keeping variables.
 TODAY=`date +%D`
@@ -49,8 +50,7 @@ USERS_AND_TIMES_FILE=/home/$ADMIN/users_and_times.cfg
 #VICTIMS=`ps -aux | grep xinitrc | grep -v 'grep\|root\|$ADMIN' | cut -f 1 -d ' '` # By extracting user with X session
 VICTIMS=`ps -aux | grep wm | grep -v "grep\|root\|$ADMIN" | cut -f 1 -d ' '` # By extracting users who started a Window Manager
 
-# For debuging...
-echo Victims are: $VICTIMS
+echo List of victims: $VICTIMS
 
 for VICTIM in $VICTIMS; do
 
@@ -69,12 +69,6 @@ for VICTIM in $VICTIMS; do
 	# STEP TWO
 	# The administrator has unlimited access (consequently, so does root),
 	# thus the script doesn't need to run if admin/root is logged in.
-
-	# Eliminated by the 'grep -v "grep\|root\|$ADMIN"' so it is not needed anymore
-	#if [ -z "$VICTIM" -o "$VICTIM" == "$ADMIN" -o "$VICTIM" == "root" ]
-	#then
-	#  break
-	#fi
 
 	# STEP THREE
 	# Check if $VICTIM already have the two configuration files in root's
@@ -109,10 +103,9 @@ for VICTIM in $VICTIMS; do
 	  then
 	    TIME_LEFT=0
 	  fi
-
-		echo $TODAY > $ROLLOVER_DATE_FILE
-		echo $TIME_LEFT > $TIME_LEFT_FILE 
-		echo $TIME_LEFT > $TIME_LEFT_FILE_FOR_USER
+	  echo $TODAY > $ROLLOVER_DATE_FILE
+	  echo $TIME_LEFT > $TIME_LEFT_FILE 
+	  echo $TIME_LEFT > $TIME_LEFT_FILE_FOR_USER
 	fi
 
 	# STEP SIX
@@ -121,9 +114,8 @@ for VICTIM in $VICTIMS; do
 	DISP=`ps -aux | grep wm | grep ^$VICTIM | grep -v grep | tr -s ' ' | cut -f 13 -d ' '`
 
 	# Display a warning message on the victim's screen:
-	sudo -u $VICTIM DISPLAY=$DISP notify-send -t 10000 -i gtk-info "Rappel:" "Il te reste $TIME_LEFT minutes pour aujourd hui."
+	sudo -u $VICTIM DISPLAY=$DISP notify-send -t 10000 -i gtk-info "Rappel:" "Il te reste $TIME_LEFT minutes pour aujourd hui." &
 	#  "Reminder:" "You have $TIME_LEFT minutes left for the day."
-	#sleep 10  # It takes 10 seconds for notify-send to finish the OSD
 
 	# Audio play a warning (so that if victim is in a full-screen game, he will hear the message)
 	# I got problem 'unable to open slave' with all of the below: aplay (package alsa-utils), speaker-test, play (package sox),...
@@ -141,16 +133,16 @@ for VICTIM in $VICTIMS; do
 	fi
 	#espeak "$TIME_LEFT minutes remaining"
 
-	if [ $TIME_LEFT -eq 5 ]
-	then
-		sudo -u $VICTIM aplay /home/$ADMIN/ParentalControl_5mn_left.wav
-	elif [ $TIME_LEFT -eq 2 ]
-	then
-		sudo -u $VICTIM aplay /home/$ADMIN/ParentalControl_2mn_left.wav
-	elif [ $TIME_LEFT -eq 1 ]
-	then
-		sudo -u $VICTIM aplay /home/$ADMIN/ParentalControl_1mn_left.wav
-	fi
+	#if [ $TIME_LEFT -eq 5 ]
+	#then
+	#	sudo -u $VICTIM aplay /home/$ADMIN/ParentalControl_5mn_left.wav
+	#elif [ $TIME_LEFT -eq 2 ]
+	#then
+	#	sudo -u $VICTIM aplay /home/$ADMIN/ParentalControl_2mn_left.wav
+	#elif [ $TIME_LEFT -eq 1 ]
+	#then
+	#	sudo -u $VICTIM aplay /home/$ADMIN/ParentalControl_1mn_left.wav
+	#fi
 
 	# STEPs SEVEN and EIGHT
 	# Find out if $VICTIM exhausted the allowed time limit.  If there's still
@@ -159,12 +151,12 @@ for VICTIM in $VICTIMS; do
 
 	if [ $TIME_LEFT -gt 0 ]
 	then
-		# There is still time left:
-		TIME_LEFT=`expr $TIME_LEFT - 1`
-	 	echo $TIME_LEFT > $TIME_LEFT_FILE
-     	echo $TIME_LEFT > $TIME_LEFT_FILE_FOR_USER
+	  # There is still time left:
+	  TIME_LEFT=`expr $TIME_LEFT - 1`
+	  echo $TIME_LEFT > $TIME_LEFT_FILE
+	  echo $TIME_LEFT > $TIME_LEFT_FILE_FOR_USER
  	else
-		# time expired, we lock screen or logout:
+	  # time expired, we lock screen or logout:
 
 	  # Works with Xfce4, replace 'xfce4-session' with approppriate one to adapt for the others:
 	  # sudo -u $VICTIM DISPLAY=$DISP xfce4-session-logout --logout # Return a D-Bus error: "Failed to connect to socket"
