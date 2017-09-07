@@ -25,7 +25,7 @@
 #
 ##########
 
-# To debug a cron job (as this script), we can also inform the cron line with the "2>&1" tag, as per below example:
+# To debug a cron job (as this script), inform the cron line with the "2>&1" tag, as per below example:
 # * * * * * /root/limit-usage-time.sh >> /tmp/limit-usage-time.log 2>&1
 echo -----------------------------------------------------------
 echo `date`
@@ -34,8 +34,8 @@ set -x
 
 
 # Some useful variables
-ADMIN=thomas  # ADMIN = login name of the computer's administrator.
-# TODO: move to variable
+# ADMIN = login name of the computer's administrator.
+ADMIN=`cat /root/parental_control_admin.cfg`
 
 # Date- and time-keeping variables.
 TODAY=`date +%D`
@@ -46,9 +46,10 @@ TIME_LEFT=0
 USERS_AND_TIMES_FILE=/home/$ADMIN/users_and_times.cfg
 
 # Who's currently logged in:
-#VICTIMS=`users`        #This does not work if other users are connected with 'ssh' for example, also an issue if user launch various terminals...
+#VICTIMS=`users`        # Issue: if user launches multiple terminals, he appears multiple times... (ssh in, …)
 #VICTIMS=`ps -aux | grep xinitrc | grep -v 'grep\|root\|$ADMIN' | cut -f 1 -d ' '` # By extracting user with X session
-VICTIMS=`ps -aux | grep wm | grep -v "grep\|root\|$ADMIN" | cut -f 1 -d ' '` # By extracting users who started a Window Manager
+#VICTIMS=`ps -aux | grep wm | grep -v "grep\|root\|$ADMIN" | cut -f 1 -d ' '` # By extracting users who started a Window Manager
+VICTIMS=`ps -axo user:32,args | grep /sbin/upstart | grep -v "grep\|root\|$ADMIN" | cut -f 1 -d ' '` # By extracting users who started a grafical session (users logged on with 'ssh -X' will NOT be detected)
 
 echo List of victims: $VICTIMS
 
@@ -114,8 +115,10 @@ for VICTIM in $VICTIMS; do
 	DISP=`ps -aux | grep wm | grep ^$VICTIM | grep -v grep | tr -s ' ' | cut -f 13 -d ' '`
 
 	# Display a warning message on the victim's screen:
-	sudo -u $VICTIM DISPLAY=$DISP notify-send -t 10000 -i gtk-info "Rappel:" "Il te reste $TIME_LEFT minutes pour aujourd hui." &
+	sudo -u $VICTIM DISPLAY=$DISP notify-send -t 10000 -i gtk-info "Reminder:" "You have $TIME_LEFT minutes left for the day." &
 	#  "Reminder:" "You have $TIME_LEFT minutes left for the day."
+	# for French/français:
+	#  "Rappel:" "Il te reste $TIME_LEFT minutes pour aujourd hui."
 
 	# Audio play a warning (so that if victim is in a full-screen game, he will hear the message)
 	# I got problem 'unable to open slave' with all of the below: aplay (package alsa-utils), speaker-test, play (package sox),...
@@ -129,9 +132,9 @@ for VICTIM in $VICTIMS; do
 
 	if [ $TIME_LEFT -lt 6 ]
 	then
-		espeak -v french "Il reste $TIME_LEFT minutes."
+		espeak -v english "$TIME_LEFT minutes left."
+		#espeak -v french "Il reste $TIME_LEFT minutes."
 	fi
-	#espeak "$TIME_LEFT minutes remaining"
 
 	#if [ $TIME_LEFT -eq 5 ]
 	#then
@@ -168,10 +171,9 @@ for VICTIM in $VICTIMS; do
 	  # sudo pkill -u $VICTIM
 	fi
 
-	# We're done for this victim!
+	echo "We're done for this victim!"
 done
 
-# We're done for all victims!
+echo "We're done for all victims!"
+exit 0
 
-# EOF
-echo -----------------------------------------------------------
