@@ -44,8 +44,8 @@ if [ "$defaultadmin" == "" ]; then
 	term=`tty`
 	defaultadmin=`ls -l $term | awk '{print $3}'`
 fi
-if [ -f /root/parental_control_admin.cfg ]; then
-	PREVIOUS_ADMIN=`sudo cat /root/parental_control_admin.cfg`
+PREVIOUS_ADMIN=`sudo cat /root/parental_control_admin.cfg`
+if [ "PREVIOUS_ADMIN" != "" ]; then
 	echo "Information: '$PREVIOUS_ADMIN' as been previously informed as administrator."
 fi
 read -p "Define user who would be administrator [default=$defaultadmin] :" ADMIN
@@ -65,8 +65,7 @@ echo "# Format: <login-name> <allocated minutes>" >>$USERS_AND_TIMES_FILE
 echo >>$USERS_AND_TIMES_FILE
 echo
 echo "What should be the time limit for each user, in minutes per day?"
-echo "- a default value of 60 minutes per day is used,"
-echo "  except for the administrator who has unlimited time -"
+echo "- a default value of 60 minutes per day will be used if none informed -"
 for VICTIM in $VICTIMS; do
 	DEFAULT_TIME_LIMIT=60
 	if [ "$VICTIM" == "$ADMIN" ]; then
