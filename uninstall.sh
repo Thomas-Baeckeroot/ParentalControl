@@ -28,15 +28,20 @@ fi
 
 sudo gvfs-trash /root/limit-usage-time.sh
 echo $?
-sudo gvfs-trash /root/*-rollover-date.cfg
-echo $?
-sudo gvfs-trash /root/*-time-left.cfg
-echo $?
+# Users of the machine (non-system, not weird, etc):
+VICTIMS=`awk -F'[/:]' '{if ($3 >= 1000 && $3 != 65534) print $1}' /etc/passwd`
+for VICTIM in $VICTIMS; do
+	sudo gvfs-trash /root/$VICTIM-rollover-date.cfg
+	echo $?
+	sudo gvfs-trash /root/$VICTIM-time-left.cfg
+	echo $?
+done
 
-ADMIN=`cat /root/parental_control_admin.cfg`
+ADMIN=`sudo cat /root/parental_control_admin.cfg`
 USERS_AND_TIMES_FILE=/home/$ADMIN/users_and_times.cfg
 sudo gvfs-trash $USERS_AND_TIMES_FILE
 echo $?
 
+echo "Terminated."
 exit 0
 
