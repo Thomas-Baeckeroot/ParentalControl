@@ -28,6 +28,7 @@ else
 	sudo crontab -l > /tmp/modified_crontab.cron
 	# Adding below line to run every minute:
 	echo '* * * * * /root/limit-usage-time.sh' >>/tmp/modified_crontab.cron
+	#echo '* * * * * /root/limit-usage-time.sh >> /tmp/limit-usage-time.log 2>&1' >>/tmp/modified_crontab.cron
 	sudo crontab /tmp/modified_crontab.cron
 fi
 

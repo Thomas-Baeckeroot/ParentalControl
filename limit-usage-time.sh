@@ -54,7 +54,7 @@ VICTIMS=`ps -axo user:32,args | grep /sbin/upstart | grep -v "grep\|root\|$ADMIN
 echo List of victims: $VICTIMS
 
 for VICTIM in $VICTIMS; do
-
+	echo "Starting victim $VICTIM ..."
 	# Shortcuts to configuration files.
 	ROLLOVER_DATE_FILE=/root/$VICTIM-rollover-date.cfg
 	TIME_LEFT_FILE=/root/$VICTIM-time-left.cfg
@@ -171,9 +171,9 @@ for VICTIM in $VICTIMS; do
 	  # sudo pkill -u $VICTIM
 	fi
 
-	echo "We're done for this victim!"
+	echo "We're done for victim $VICTIM !"
 done
 
-echo "We're done for all victims!"
+echo "We're done for ALL victims !"
 exit 0
 

@@ -15,9 +15,6 @@ echo
 echo "This script will remove files and remove"
 echo "configuration -crontab- from your system."
 
-sudo gvfs-trash /root/limit-usage-time.sh
-echo $?
-
 echo "Check if limit-usage-time.sh has been added to cron..."
 sudo crontab -l | grep limit-usage-time.sh > nul
 if [ "$?" == "0" ]; then
@@ -29,26 +26,17 @@ else
 	echo "limit-usage-time.sh not detected in cron, no need to remove."
 fi
 
-# TODO Check from below, might just be deleted
-echo ""
-echo "Known users of this machine:"
-# Users of the machine (non-system, not weird, etc):
-awk -F'[/:]' '{if ($3 >= 1000 && $3 != 65534) print $1}' /etc/passwd
-echo ""
+sudo gvfs-trash /root/limit-usage-time.sh
+echo $?
+sudo gvfs-trash /root/*-rollover-date.cfg
+echo $?
+sudo gvfs-trash /root/*-time-left.cfg
+echo $?
 
-defaultadmin=`who am i | awk '{print $1}'`
-# workaround in case previous did not worked ( gnome-terminal issue )
-if [ "$defaultadmin" == "" ]; then
-	term=`tty`
-	defaultadmin=`ls -l $term | awk '{print $3}'`
-fi
-
-read -p "Define user who would be administrator [default=$defaultadmin] :" adminuser
-if [ "$adminuser" == "" ]; then
-	adminuser=$defaultadmin
-fi
-
-
+ADMIN=`cat /root/parental_control_admin.cfg`
+USERS_AND_TIMES_FILE=/home/$ADMIN/users_and_times.cfg
+sudo gvfs-trash $USERS_AND_TIMES_FILE
+echo $?
 
 exit 0
 
