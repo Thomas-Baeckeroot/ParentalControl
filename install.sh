@@ -84,6 +84,10 @@ for VICTIM in $VICTIMS; do
 done
 # We're done for all victims!
 sudo chown $ADMIN:$ADMIN $USERS_AND_TIMES_FILE
+
+sudo cp parentalcontrol_display_time.sh /usr/bin/
+sudo chmod 555 /usr/bin/parentalcontrol_display_time.sh
+
 echo
 which espeak >nul
 if [ "$?" != "0" ]; then

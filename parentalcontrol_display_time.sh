@@ -26,6 +26,9 @@ then
 	STR_MIN_LEFT="$TIME_LEFT minutes\n pour aujourd hui."
 fi
 
+echo "User $USER"
+echo "$STR_REM_TIME"
+echo "$STR_MIN_LEFT"
 notify-send -i gtk-info "$STR_REM_TIME" "$STR_MIN_LEFT"
 # -t 10000
 

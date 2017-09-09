@@ -147,22 +147,10 @@ for VICTIM in $VICTIMS; do
 		#espeak -v french "Il reste $TIME_LEFT minutes."
 	fi
 
-	#if [ $TIME_LEFT -eq 5 ]
-	#then
-	#	sudo -u $VICTIM aplay /home/$ADMIN/ParentalControl_5mn_left.wav
-	#elif [ $TIME_LEFT -eq 2 ]
-	#then
-	#	sudo -u $VICTIM aplay /home/$ADMIN/ParentalControl_2mn_left.wav
-	#elif [ $TIME_LEFT -eq 1 ]
-	#then
-	#	sudo -u $VICTIM aplay /home/$ADMIN/ParentalControl_1mn_left.wav
-	#fi
-
 	# STEPs SEVEN and EIGHT
 	# Find out if $VICTIM exhausted the allowed time limit.  If there's still
 	# $TIME_LEFT, decrease by 1 and store the new value in the configuration file.
 	# Otherwise lock the screen (or force an ungraceful logout).
-
 	if [ $TIME_LEFT -gt 0 ]
 	then
 		echo "Still $TIME_LEFT minutes left for user $VICTIM ."
@@ -189,8 +177,8 @@ for VICTIM in $VICTIMS; do
 		# Display logout screen:
 		# sudo -u $VICTIM DISPLAY=$DISP xfce4-session-logout --logout # Return a D-Bus error: "Failed to connect to socket"
 	fi
-	echo "We're done for victim $VICTIM !"
+	echo "We're done for user $VICTIM !"
 done
-echo "We're done for ALL victims !"
+echo "We're done for ALL users !"
 exit 0
 
