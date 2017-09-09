@@ -79,12 +79,12 @@ for VICTIM in $VICTIMS; do
 
 	if [ ! -e "$ROLLOVER_DATE_FILE" -o ! -e "$TIME_LEFT_FILE" ]
 	then
-	  echo $YESTERDAY > $ROLLOVER_DATE_FILE
-	  echo $TIME_LEFT > $TIME_LEFT_FILE
-	  echo $TIME_LEFT > $TIME_LEFT_FILE_FOR_USER
+		echo $YESTERDAY > $ROLLOVER_DATE_FILE
+		echo $TIME_LEFT > $TIME_LEFT_FILE
+		echo $TIME_LEFT > $TIME_LEFT_FILE_FOR_USER
 	else
-	  YESTERDAY=`cat $ROLLOVER_DATE_FILE`
-	  TIME_LEFT=`cat $TIME_LEFT_FILE`
+		YESTERDAY=`cat $ROLLOVER_DATE_FILE`
+		TIME_LEFT=`cat $TIME_LEFT_FILE`
 	fi
 
 	# STEP FOUR
@@ -97,22 +97,34 @@ for VICTIM in $VICTIMS; do
 
 	if [ "$TODAY" != "$YESTERDAY" ]
 	then
-	  # Find out the allocated time for $VICTIM.  If $VICTIM's not found
-	  # in the configuration file, defaults to zero.
-	  TIME_LEFT=`grep $VICTIM $USERS_AND_TIMES_FILE | awk '{print $2}'`
-	  if [ -z $TIME_LEFT ]
-	  then
-	    TIME_LEFT=0
-	  fi
-	  echo $TODAY > $ROLLOVER_DATE_FILE
-	  echo $TIME_LEFT > $TIME_LEFT_FILE 
-	  echo $TIME_LEFT > $TIME_LEFT_FILE_FOR_USER
+		# Find out the allocated time for $VICTIM.  If $VICTIM's not found
+		# in the configuration file, defaults to zero.
+		TIME_LEFT=`grep $VICTIM $USERS_AND_TIMES_FILE | awk '{print $2}'`
+		if [ -z $TIME_LEFT ]
+		then
+			# Default time left if not found in $USERS_AND_TIMES_FILE:
+			TIME_LEFT=60
+			# This may be the value used by guest sessions.
+			# Users of those sessions have the form "guest-abcdef" where abcdef is a random string.
+			# So that each new session has a new $TIME_LEFT as informed above.
+			# You may wish to disable guest account if using this script...
+		fi
+		echo $TODAY > $ROLLOVER_DATE_FILE
+		echo $TIME_LEFT > $TIME_LEFT_FILE 
+		echo $TIME_LEFT > $TIME_LEFT_FILE_FOR_USER
 	fi
 
 	# STEP SIX
 	# Remind the VICTIM that he/she has $TIME_LEFT minute(s) left for the day.
 
+	UPSTART_PID=`ps -axo pid,user:32,args | grep /sbin/upstart | grep ^$VICTIM | grep -v grep | awk '{print $1}'`
+	#Trying to get the DISPLAY from the arguments of the Window Manager:
 	DISP=`ps -aux | grep wm | grep ^$VICTIM | grep -v grep | tr -s ' ' | cut -f 13 -d ' '`
+	#if the upper line did not work, try an alternative method:
+	if [ -z $DISP ]
+	then
+		DISP=`cat /proc/$UPSTART_PID/environ 2>/dev/null | tr '\0' '\n' | grep '^DISPLAY=' | cut -d "=" -f 2`
+	fi
 
 	# Display a warning message on the victim's screen:
 	sudo -u $VICTIM DISPLAY=$DISP notify-send -t 10000 -i gtk-info "Reminder:" "You have $TIME_LEFT minutes left for the day." &
@@ -121,7 +133,7 @@ for VICTIM in $VICTIMS; do
 	#  "Rappel:" "Il te reste $TIME_LEFT minutes pour aujourd hui."
 
 	# Audio play a warning (so that if victim is in a full-screen game, he will hear the message)
-	# I got problem 'unable to open slave' with all of the below: aplay (package alsa-utils), speaker-test, play (package sox),...
+	# TODO I got problem 'unable to open slave' with all of the below: aplay (package alsa-utils), speaker-test, play (package sox),...
 	#aplay -N -c 31 /home/$ADMIN/ParentalControl_5mn_left.wav
 	#paplay /home/$ADMIN/ParentalControl_5mn_left.wav
 	#speaker-test -l 1 -t wav -r 44100 -w /home/$ADMIN/ParentalControl_5mn_left_mono.wav
@@ -129,10 +141,9 @@ for VICTIM in $VICTIMS; do
 	#mplayer /home/$ADMIN/ParentalControl_5mn_left_mono.wav
 	#sudo -u $VICTIM DISPLAY=$DISP cvlc --play-and-exit /home/$ADMIN/ParentalControl_5mn_left_mono.wav
 	#sudo -u $VICTIM DISPLAY=$DISP totem /home/$ADMIN/ParentalControl_5mn_left_mono.wav &
-
 	if [ $TIME_LEFT -lt 6 ]
 	then
-		espeak -v english "$TIME_LEFT minutes left."
+		espeak -v english "Remaining $TIME_LEFT minutes left."
 		#espeak -v french "Il reste $TIME_LEFT minutes."
 	fi
 
@@ -154,26 +165,32 @@ for VICTIM in $VICTIMS; do
 
 	if [ $TIME_LEFT -gt 0 ]
 	then
-	  # There is still time left:
-	  TIME_LEFT=`expr $TIME_LEFT - 1`
-	  echo $TIME_LEFT > $TIME_LEFT_FILE
-	  echo $TIME_LEFT > $TIME_LEFT_FILE_FOR_USER
+		echo "Still $TIME_LEFT minutes left for user $VICTIM ."
+		TIME_LEFT=`expr $TIME_LEFT - 1`
+		echo $TIME_LEFT > $TIME_LEFT_FILE
+		cp $TIME_LEFT_FILE $TIME_LEFT_FILE_FOR_USER
+		chmod 700 $TIME_LEFT_FILE_FOR_USER
+		chown $VICTIM:$VICTIM $TIME_LEFT_FILE_FOR_USER
  	else
-	  # time expired, we lock screen or logout:
+		echo "Time expired for user $VICTIM , we lock screen or logout."
 
-	  # Works with Xfce4, replace 'xfce4-session' with approppriate one to adapt for the others:
-	  # sudo -u $VICTIM DISPLAY=$DISP xfce4-session-logout --logout # Return a D-Bus error: "Failed to connect to socket"
-	  sudo -u $VICTIM DISPLAY=$DISP kill `ps -ef | grep xfce4-session | grep -v grep | grep ^$VICTIM | tr -s ' ' | cut -f 2 -d ' '`  
-	  # sudo -u $VICTIM DISPLAY=$DISP gnome-screensaver-command --activate --lock	  # If using gnome
+		# The most generic way to force-close the session:
+		sudo -u $VICTIM kill -15 $UPSTART_PID
 
-	  # The command below will force an ungraceful logout -- not recommended!
-	  # passwd -l $VICTIM
-	  # sudo pkill -u $VICTIM
+		# Killing the session:
+		# Works with Xfce4, replace 'xfce4-session' with approppriate one to adapt for the others:
+		# sudo -u $VICTIM DISPLAY=$DISP kill `ps -ef | grep xfce4-session | grep -v grep | grep ^$VICTIM | tr -s ' ' | cut -f 2 -d ' '`  
+		# sudo -u $VICTIM DISPLAY=$DISP gnome-screensaver-command --activate --lock		# If using gnome
+
+		# The command below will force an ungraceful logout -- not recommended!
+		# passwd -l $VICTIM
+		# sudo pkill -u $VICTIM
+
+		# Display logout screen:
+		# sudo -u $VICTIM DISPLAY=$DISP xfce4-session-logout --logout # Return a D-Bus error: "Failed to connect to socket"
 	fi
-
 	echo "We're done for victim $VICTIM !"
 done
-
 echo "We're done for ALL victims !"
 exit 0
 

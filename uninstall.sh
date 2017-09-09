@@ -14,7 +14,7 @@ echo "- Uninstall scripts for Parental Time Control -"
 echo
 echo "This script will remove files and remove"
 echo "configuration -crontab- from your system."
-
+echo
 echo "Check if limit-usage-time.sh has been added to cron..."
 sudo crontab -l | grep limit-usage-time.sh > nul
 if [ "$?" == "0" ]; then
@@ -25,22 +25,28 @@ if [ "$?" == "0" ]; then
 else
 	echo "limit-usage-time.sh not detected in cron, no need to remove."
 fi
-
+echo
+echo "Moving to trash /root/limit-usage-time.sh ..."
 sudo gvfs-trash /root/limit-usage-time.sh
-echo $?
+#echo $?
 # Users of the machine (non-system, not weird, etc):
 VICTIMS=`awk -F'[/:]' '{if ($3 >= 1000 && $3 != 65534) print $1}' /etc/passwd`
 for VICTIM in $VICTIMS; do
+echo "Moving to trash /root/$VICTIM-rollover-date.cfg and /root/$VICTIM-time-left.cfg ..."
 	sudo gvfs-trash /root/$VICTIM-rollover-date.cfg
-	echo $?
+	#echo $?
 	sudo gvfs-trash /root/$VICTIM-time-left.cfg
-	echo $?
+	#echo $?
+	# TODO: guest-*-rollover-date.cfg and guest-*-time-left.cfg may need to be deleted also...
 done
 
 ADMIN=`sudo cat /root/parental_control_admin.cfg`
 USERS_AND_TIMES_FILE=/home/$ADMIN/users_and_times.cfg
+echo "Moving to trash $USERS_AND_TIMES_FILE ..."
 sudo gvfs-trash $USERS_AND_TIMES_FILE
-echo $?
+#echo $?
+echo "Moving to trash /root/parental_control_admin.cfg ..."
+sudo gvfs-trash /root/parental_control_admin.cfg
 
 echo "Terminated."
 exit 0

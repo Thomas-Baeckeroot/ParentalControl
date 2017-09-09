@@ -67,6 +67,7 @@ echo >>$USERS_AND_TIMES_FILE
 echo
 echo "What should be the time limit for each user, in minutes per day?"
 echo "- a default value of 60 minutes per day will be used if none informed -"
+echo "- if an user should not be limited, you may inform 9999 as limit -"
 for VICTIM in $VICTIMS; do
 	DEFAULT_TIME_LIMIT=60
 	if [ "$VICTIM" == "$ADMIN" ]; then
@@ -83,6 +84,24 @@ for VICTIM in $VICTIMS; do
 done
 # We're done for all victims!
 sudo chown $ADMIN:$ADMIN $USERS_AND_TIMES_FILE
+echo
+which espeak >nul
+if [ "$?" != "0" ]; then
+	echo "The program 'espeak' is currently not installed."
+	echo "'espeak' is the speech synthesizer used to send an audio warning to user when his time comes to the end."
+	echo "It is not necessary but you may whish to install if willing an audio warning."
+	echo "You can install it by typing:"
+	echo "sudo apt install espeak"
+	echo ""
+	read -p "Do you want to install it now? [Yes/no] :" ESPEAK_INST
+	if [ -z $var ]; then
+		ESPEAK_INST=Yes
+	fi
+	ESPEAK_INST=${ESPEAK_INST:0:1}
+	if [ "${ESPEAK_INST^}" == "Y" ]; then
+		sudo apt install -y espeak
+	fi
+fi
 echo
 echo "Configuration file created in $USERS_AND_TIMES_FILE ."
 echo "Terminated."
