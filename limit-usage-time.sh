@@ -117,7 +117,7 @@ for VICTIM in $VICTIMS; do
 	# STEP SIX
 	# Remind the VICTIM that he/she has $TIME_LEFT minute(s) left for the day.
 
-	UPSTART_PID=`ps -axo pid,user:32,args | grep /sbin/upstart | grep ^$VICTIM | grep -v grep | awk '{print $1}'`
+	UPSTART_PID=`ps -axo pid,user:32,args | grep /sbin/upstart | grep $VICTIM | grep -v grep | awk '{print $1}'`
 	#Trying to get the DISPLAY from the arguments of the Window Manager:
 	DISP=`ps -aux | grep wm | grep ^$VICTIM | grep -v grep | tr -s ' ' | cut -f 13 -d ' '`
 	#if the upper line did not work, try an alternative method:
